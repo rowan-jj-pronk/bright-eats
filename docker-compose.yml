@@ -1,0 +1,59 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      DB_PATH: /data/brighte-eats.sqlite
+    volumes:
+      - ./data:/data
+    develop:
+      watch:
+        - path: ./api/src
+          action: sync
+          target: /app/api/src
+        - path: ./shared
+          action: sync+restart
+          target: /app/shared
+        - path: ./api/scripts
+          action: rebuild
+        - path: ./api/package.json
+          action: rebuild
+        - path: ./api/package-lock.json
+          action: rebuild
+        - path: ./api/tsconfig.json
+          action: rebuild
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    environment:
+      VITE_API_TARGET: http://api:4000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    develop:
+      watch:
+        - path: ./web/src
+          action: sync
+          target: /app/web/src
+        - path: ./shared
+          action: sync
+          target: /app/shared
+        - path: ./web/index.html
+          action: sync+restart
+          target: /app/web/index.html
+        - path: ./web/vite.config.ts
+          action: sync+restart
+          target: /app/web/vite.config.ts
+        - path: ./web/package.json
+          action: rebuild
+        - path: ./web/package-lock.json
+          action: rebuild
+        - path: ./web/tsconfig.json
+          action: rebuild
